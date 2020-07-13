@@ -58,7 +58,7 @@ async def countdown_status(bot: commands.Bot) -> None:
         hours, minutes = aligned_seconds // 3600, aligned_seconds // 60 % 60
 
         if aligned_seconds == 0:
-            playing = f"right now!"
+            playing = "right now!"
         elif aligned_seconds == COUNTDOWN_STEP:
             playing = f"in less than {minutes} minutes"
         elif hours == 0:
@@ -120,7 +120,8 @@ async def day_countdown(bot: commands.Bot) -> None:
 
             await channel.send(
                 f"{aoc_role.mention} Good morning! Day {tomorrow.day} is ready to be attempted. "
-                f"View it online now at {puzzle_url}. Good luck!"
+                f"View it online now at {puzzle_url}. Good luck!",
+                allowed_mentions=discord.AllowedMentions(everyone=False, roles=[aoc_role])
             )
 
         # Wait a couple minutes so that if our sleep didn't sleep enough
