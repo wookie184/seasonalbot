@@ -95,8 +95,6 @@ async def day_countdown(bot: commands.Bot) -> None:
             break
 
         aoc_role = channel.guild.get_role(AocConfig.role_id)
-        log.info('got here as well')
-        log.info(aoc_role)
         if not aoc_role:
             log.error("Could not find the AoC role to announce the daily puzzle")
             break
