@@ -1,4 +1,4 @@
-version: "3.7"
+version: "3.8"
 services:
   seasonalbot:
     build:
@@ -12,6 +12,8 @@ services:
     environment:
       - SEASONALBOT_TOKEN=yourtokenhere
       - SEASONALBOT_DEBUG=true
+      - AOC_ROLE_ID=651730380898041862
+      - AOC_CHANNEL_ID=651732924391227392
     # - SEASONALBOT_GUILD=
     # - SEASONALBOT_ADMIN_ROLE_ID=
     # - CHANNEL_ANNOUNCEMENTS=
