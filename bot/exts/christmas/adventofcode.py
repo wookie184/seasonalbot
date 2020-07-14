@@ -10,7 +10,7 @@ from typing import List, Tuple
 import aiohttp
 import discord
 from bs4 import BeautifulSoup
-from discord.ext import commands
+from discord.ext import commands, tasks
 from pytz import timezone
 
 from bot.constants import AdventOfCode as AocConfig, Channels, Colours, Emojis, Month, Tokens, WHITELISTED_CHANNELS
@@ -31,7 +31,7 @@ AOC_WHITELIST = WHITELISTED_CHANNELS + (Channels.advent_of_code,)
 def is_in_advent() -> bool:
     """Utility function to check if we are between December 1st and December 25th."""
     # Run the code from the 1st to the 24th
-    return datetime.now(EST).day in range(1, 25) and datetime.now(EST).month == 12
+    return datetime.now(EST).day in range(1, 25) and datetime.now(EST).month == 7
 
 
 def time_left_to_aoc_midnight() -> Tuple[datetime, timedelta]:
@@ -85,18 +85,18 @@ async def day_countdown(bot: commands.Bot) -> None:
     """
     while is_in_advent():
         tomorrow, time_left = time_left_to_aoc_midnight()
-
         # Correct `time_left.seconds` for the sleep we have after unlocking the role (-5) and adding
         # a second (+1) as the bot is consistently ~0.5 seconds early in announcing the puzzles.
-        await asyncio.sleep(time_left.seconds - 4)
+        # await asyncio.sleep(time_left.seconds - 4)
 
-        channel = bot.get_channel(Channels.advent_of_code)
-
+        channel = await bot.fetch_channel(Channels.advent_of_code)
         if not channel:
             log.error("Could not find the AoC channel to send notification in")
             break
 
         aoc_role = channel.guild.get_role(AocConfig.role_id)
+        log.info('got here as well')
+        log.info(aoc_role)
         if not aoc_role:
             log.error("Could not find the AoC role to announce the daily puzzle")
             break
@@ -148,11 +148,20 @@ class AdventOfCode(commands.Cog):
         self.countdown_task = None
         self.status_task = None
 
-        countdown_coro = day_countdown(self.bot)
-        self.countdown_task = self.bot.loop.create_task(countdown_coro)
+        # countdown_coro = day_countdown(self.bot)
+        # self.countdown_task = self.bot.loop.create_task(countdown_coro)
 
-        status_coro = countdown_status(self.bot)
-        self.status_task = self.bot.loop.create_task(status_coro)
+        # status_coro = countdown_status(self.bot)
+        # self.status_task = self.bot.loop.create_task(status_coro)
+        # countdown_status.start()
+
+        self.lock = asyncio.Lock()
+        self.bulker.start()
+
+    @tasks.loop(seconds=10.0)
+    async def bulker(self):
+        async with self.lock:
+            await day_countdown(self.bot)
 
     @in_month(Month.DECEMBER)
     @commands.group(name="adventofcode", aliases=("aoc",))
@@ -452,8 +461,9 @@ class AdventOfCode(commands.Cog):
     def cog_unload(self) -> None:
         """Cancel season-related tasks on cog unload."""
         log.debug("Unloading the cog and canceling the background task.")
-        self.countdown_task.cancel()
-        self.status_task.cancel()
+        self.bulker.cancel()
+        # self.countdown_task.cancel()
+        # self.status_task.cancel()
 
 
 class AocMember:
